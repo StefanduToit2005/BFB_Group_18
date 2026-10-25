@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MediLink | Patient records</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="../static/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main id="main">
+    <header class="ml-page-header">
+      <div class="container">
+        <nav aria-label="breadcrumb"><ol class="breadcrumb small mb-2">
+          <li class="breadcrumb-item"><a href="admin.html">Admin</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Patient records</li>
+        </ol></nav>
+        <h1>Patient records</h1>
+        <p>Instant lookup by patient number, ID number, name or email. No shelf searching.</p>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="row g-3 mb-3 align-items-center">
+        <div class="col-md-6">
+          <label for="pSearch" class="visually-hidden">Search patients</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+            <input type="search" class="form-control" id="pSearch" placeholder="ML-1001, ID or passport number, name or email" autofocus>
+          </div>
+        </div>
+        <div class="col-md-6 text-md-end small text-muted" id="digiSummary" aria-live="polite"></div>
+      </div>
+
+      <div class="ml-table-wrap">
+        <div class="table-responsive">
+          <table class="table ml-table">
+            <caption class="visually-hidden">Patient records. Select a row to open the file.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Patient no</th>
+                <th scope="col">Name</th>
+                <th scope="col">ID / passport</th>
+                <th scope="col">Contact</th>
+                <th scope="col">File</th>
+              </tr>
+            </thead>
+            <tbody id="patientBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../static/auth-hash.js"></script>
+  <script src="../static/data.js"></script>
+  <script src="../static/components.js"></script>
+  <script>
+    if (!UI.init("records", UI.STAFF)) throw new Error("Not allowed");
+    const body = document.getElementById("patientBody");
+    let timer;
+
+    async function load(q = "") {
+      body.innerHTML = `<tr><td colspan="5" class="ml-state-cell">${UI.loading("Searching...")}</td></tr>`;
+      try {
+        const list = await MediLinkAPI.getPatients(q);
+        const digi = list.filter(p => p.digitised).length;
+        document.getElementById("digiSummary").textContent =
+          `${list.length} record${list.length === 1 ? "" : "s"} · ${digi} digitised · ${list.length - digi} still on paper`;
+        if (!list.length) {
+          body.innerHTML = `<tr><td colspan="5" class="ml-state-cell">${UI.empty("No patient matches that search.", "bi-person-x")}</td></tr>`;
+          return;
+        }
+        body.innerHTML = list.map(p => `
+          <tr tabindex="0" data-pn="${p.patientNo}">
+            <td data-label="Patient no" class="fw-semibold text-primary">${p.patientNo}</td>
+            <td data-label="Name">${UI.escapeHtml(p.firstName)} ${UI.escapeHtml(p.surname)}</td>
+            <td data-label="ID / passport">${UI.escapeHtml(UI.docLabel(p))}</td>
+            <td data-label="Contact"><div>${UI.escapeHtml(p.email)}</div><div class="small text-muted">${UI.escapeHtml(p.phone)}</div></td>
+            <td data-label="File">${UI.fileBadge(p.digitised)}</td>
+          </tr>`).join("");
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="5" class="ml-state-cell">${UI.error(err.message)}</td></tr>`;
+      }
+    }
+
+    const open = tr => { if (tr) location.href = `patient-file.html?id=${encodeURIComponent(tr.dataset.pn)}`; };
+    body.addEventListener("click", e => open(e.target.closest("tr[data-pn]")));
+    body.addEventListener("keydown", e => { if (e.key === "Enter") open(e.target.closest("tr[data-pn]")); });
+    document.getElementById("pSearch").addEventListener("input", e => {
+      clearTimeout(timer); timer = setTimeout(() => load(e.target.value), 200);
+    });
+    load();
+  </script>
+</body>
+</html>

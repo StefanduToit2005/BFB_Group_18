@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MediLink | Admin request queue</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="../static/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main id="main">
+    <header class="ml-page-header">
+      <div class="container d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div>
+          <h1>Request queue</h1>
+          <p>Every request from the portal, email, phone and walk-ins, already matched to a patient record.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="patients.html" class="btn btn-outline-primary"><i class="bi bi-people me-1" aria-hidden="true"></i>Patient records</a>
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#logModal">
+            <i class="bi bi-telephone-plus me-1" aria-hidden="true"></i>Log phone or walk-in request
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- KPI tiles -->
+      <div class="row g-3 mb-4" id="kpiRow" aria-label="Queue summary">
+        <div class="col-6 col-lg-3"><div class="kpi-tile"><div class="kpi-label">New, needs action</div><div class="kpi-value" id="kNew">&ndash;</div></div></div>
+        <div class="col-6 col-lg-3"><div class="kpi-tile"><div class="kpi-label">Urgent and open</div><div class="kpi-value text-danger" id="kUrgent">&ndash;</div></div></div>
+        <div class="col-6 col-lg-3"><div class="kpi-tile"><div class="kpi-label">With neurologist</div><div class="kpi-value" id="kFwd">&ndash;</div></div></div>
+        <div class="col-6 col-lg-3"><div class="kpi-tile"><div class="kpi-label">Avg time to complete</div><div class="kpi-value" id="kAvg">&ndash;</div></div></div>
+      </div>
+
+      <!-- Filters -->
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+        <div class="btn-group flex-wrap" role="group" aria-label="Filter by status">
+          <input type="radio" class="btn-check" name="statusFilter" id="fAll" value="all">
+          <label class="btn btn-outline-primary btn-sm" for="fAll">All</label>
+          <input type="radio" class="btn-check" name="statusFilter" id="fNew" value="new" checked>
+          <label class="btn btn-outline-primary btn-sm" for="fNew">New</label>
+          <input type="radio" class="btn-check" name="statusFilter" id="fFwd" value="forwarded">
+          <label class="btn btn-outline-primary btn-sm" for="fFwd">With neurologist</label>
+          <input type="radio" class="btn-check" name="statusFilter" id="fDone" value="completed">
+          <label class="btn btn-outline-primary btn-sm" for="fDone">Completed</label>
+        </div>
+        <div class="ms-md-auto" style="min-width:240px">
+          <label for="search" class="visually-hidden">Search requests</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+            <input type="search" class="form-control" id="search" placeholder="Search name, patient no or subject">
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="ml-table-wrap">
+        <div class="table-responsive">
+          <table class="table ml-table">
+            <caption class="visually-hidden">Patient requests. Select a row to open it.</caption>
+            <thead>
+              <tr>
+                <th scope="col"><button class="sort-btn" data-sort="createdAt" aria-sort="descending">Received <i class="bi bi-arrow-down-up" aria-hidden="true"></i></button></th>
+                <th scope="col"><button class="sort-btn" data-sort="patientName">Patient <i class="bi bi-arrow-down-up" aria-hidden="true"></i></button></th>
+                <th scope="col">Subject</th>
+                <th scope="col"><button class="sort-btn" data-sort="channel">Channel <i class="bi bi-arrow-down-up" aria-hidden="true"></i></button></th>
+                <th scope="col"><button class="sort-btn" data-sort="urgency">Urgency <i class="bi bi-arrow-down-up" aria-hidden="true"></i></button></th>
+                <th scope="col"><button class="sort-btn" data-sort="status">Status <i class="bi bi-arrow-down-up" aria-hidden="true"></i></button></th>
+              </tr>
+            </thead>
+            <tbody id="queueBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- View / action modal -->
+  <div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title h5" id="viewTitle">Request</h2>
+            <div class="small text-muted" id="viewMeta"></div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-7">
+              <div class="small-caps mb-1">Message</div>
+              <p id="viewBody" class="mb-3"></p>
+              <form id="actionForm">
+                <div class="mb-3">
+                  <label for="viewUrgency" class="form-label">Urgency</label>
+                  <select class="form-select" id="viewUrgency">
+                    <option value="urgent">Urgent</option>
+                    <option value="soon">Soon</option>
+                    <option value="routine">Routine</option>
+                  </select>
+                </div>
+                <div class="mb-0">
+                  <label for="viewNote" class="form-label">Note for the neurologist</label>
+                  <textarea class="form-control" id="viewNote" rows="3" maxlength="300" placeholder="e.g. deadline, who sent it, what is needed"></textarea>
+                </div>
+              </form>
+            </div>
+            <div class="col-md-5">
+              <div class="ml-card ml-card-tight bg-light">
+                <div class="small-caps mb-2">Linked patient record</div>
+                <div class="fw-semibold" id="viewPatientName"></div>
+                <div class="small text-muted mb-2" id="viewPatientNo"></div>
+                <div id="viewFileBadge" class="mb-3"></div>
+                <a href="#" class="btn btn-outline-primary btn-sm w-100" id="viewOpenFile">
+                  <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>Open patient file
+                </a>
+                <a href="#" class="btn btn-primary btn-sm w-100 mt-2 d-none" id="viewScanFile">
+                  <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Scan in paper file
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-outline-success" id="completeBtn"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Admin handled it</button>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" id="saveBtn">Save</button>
+            <button type="button" class="btn btn-primary" id="forwardBtn"><i class="bi bi-send me-1" aria-hidden="true"></i>Forward to neurologist</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log phone / walk-in modal -->
+  <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <form id="logForm" novalidate>
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="logTitle">Log a phone or walk-in request</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="patientSearch" class="form-label required">Find the patient</label>
+              <input type="search" class="form-control" id="patientSearch" placeholder="Patient no, ID or passport number, or name" autocomplete="off" aria-describedby="psHelp">
+              <div id="psHelp" class="form-text">Ask the caller for their patient number first. ID number works too.</div>
+              <div id="patientResults" class="list-group mt-2" role="listbox" aria-label="Matching patients"></div>
+              <input type="hidden" id="logPatientNo" required>
+              <div class="invalid-feedback d-block d-none" id="patientError">Please pick a patient from the list.</div>
+              <div class="alert alert-primary py-2 small mt-2 d-none" id="pickedPatient"></div>
+            </div>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label for="logChannel" class="form-label required">Channel</label>
+                <select class="form-select" id="logChannel" required>
+                  <option>Phone</option>
+                  <option>In person</option>
+                  <option>Email</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label for="logUrgency" class="form-label required">Urgency</label>
+                <select class="form-select" id="logUrgency" required>
+                  <option value="routine">Routine</option>
+                  <option value="soon">Soon</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label for="logCategory" class="form-label required">Category</label>
+                <select class="form-select" id="logCategory" required>
+                  <option value="">Choose one...</option>
+                  <option>Follow-up appointment</option>
+                  <option>New symptoms</option>
+                  <option>Prescription question</option>
+                  <option>Test results</option>
+                  <option>Referral / report request</option>
+                  <option>Other</option>
+                </select>
+                <div class="invalid-feedback">Please choose a category.</div>
+              </div>
+              <div class="col-12">
+                <label for="logSubject" class="form-label required">Subject</label>
+                <input type="text" class="form-control" id="logSubject" required maxlength="80">
+                <div class="invalid-feedback">Please add a short subject.</div>
+              </div>
+              <div class="col-12">
+                <label for="logBody" class="form-label required">Details</label>
+                <textarea class="form-control" id="logBody" rows="3" required minlength="5"></textarea>
+                <div class="invalid-feedback">Please add a few details.</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add to queue</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="site-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../static/auth-hash.js"></script>
+  <script src="../static/data.js"></script>
+  <script src="../static/components.js"></script>
+  <script src="../static/admin.js"></script>
+</body>
+</html>

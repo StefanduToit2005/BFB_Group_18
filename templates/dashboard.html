@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MediLink | Impact dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="../static/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main id="main">
+    <header class="ml-page-header">
+      <div class="container">
+        <h1>Impact dashboard</h1>
+        <p>File retrieval time and admin cost, before MediLink and with MediLink. Change the inputs to test different scenarios.</p>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Headline KPIs -->
+      <div class="row g-3 mb-4" aria-live="polite">
+        <div class="col-6 col-lg-3"><div class="kpi-tile">
+          <div class="kpi-label">Admin hours saved per day</div>
+          <div class="kpi-value" id="hSaved">&ndash;</div>
+          <div class="kpi-delta kpi-good" id="hSavedSub"></div>
+        </div></div>
+        <div class="col-6 col-lg-3"><div class="kpi-tile">
+          <div class="kpi-label">Saved per month</div>
+          <div class="kpi-value" id="mSaved">&ndash;</div>
+          <div class="kpi-delta kpi-good" id="ySaved"></div>
+        </div></div>
+        <div class="col-6 col-lg-3"><div class="kpi-tile">
+          <div class="kpi-label">Average retrieval time</div>
+          <div class="kpi-value" id="avgAfter">&ndash;</div>
+          <div class="kpi-delta kpi-good" id="avgCut"></div>
+        </div></div>
+        <div class="col-6 col-lg-3"><div class="kpi-tile">
+          <div class="kpi-label">Delayed retrievals per day</div>
+          <div class="kpi-value" id="delAfter">&ndash;</div>
+          <div class="kpi-delta kpi-good" id="delSub"></div>
+        </div></div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Inputs -->
+        <div class="col-lg-4">
+          <section class="ml-card" aria-labelledby="inH">
+            <h2 id="inH" class="h3 mb-1">Model inputs</h2>
+            <p class="small text-muted mb-3">Defaults come from the neurologist interview. Values must match the Python supply chain model.</p>
+            <form id="inputs" novalidate>
+              <div class="mb-3">
+                <label for="digitisedShare" class="form-label d-flex justify-content-between">
+                  <span>Files already digitised</span><strong id="digiOut">60%</strong></label>
+                <input type="range" class="form-range" id="digitisedShare" min="0" max="100" step="5" value="60" aria-describedby="digiHelp">
+                <div id="digiHelp" class="form-text">Share of requested files that are on MediLink. Grows as paper files are scanned when pulled.</div>
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label for="retrievalsPerDay" class="form-label small">Retrievals per day</label>
+                  <input type="number" class="form-control form-control-sm" id="retrievalsPerDay" min="1" max="200" step="1" required>
+                  <div class="invalid-feedback">1 to 200</div>
+                </div>
+                <div class="col-6">
+                  <label for="delayRate" class="form-label small">Delay rate (%)</label>
+                  <input type="number" class="form-control form-control-sm" id="delayRate" min="0" max="100" step="1" required>
+                  <div class="invalid-feedback">0 to 100</div>
+                </div>
+                <div class="col-6">
+                  <label for="extraMinutesPerDelay" class="form-label small">Extra min per delay</label>
+                  <input type="number" class="form-control form-control-sm" id="extraMinutesPerDelay" min="0" max="120" step="1" required>
+                  <div class="invalid-feedback">0 to 120</div>
+                </div>
+                <div class="col-6">
+                  <label for="baseMinutes" class="form-label small">Best-case paper min</label>
+                  <input type="number" class="form-control form-control-sm" id="baseMinutes" min="0" max="60" step="1" required>
+                  <div class="invalid-feedback">0 to 60</div>
+                </div>
+                <div class="col-6">
+                  <label for="digitalLookupMinutes" class="form-label small">Digital lookup min</label>
+                  <input type="number" class="form-control form-control-sm" id="digitalLookupMinutes" min="0" max="30" step="0.5" required>
+                  <div class="invalid-feedback">0 to 30</div>
+                </div>
+                <div class="col-6">
+                  <label for="adminRatePerHour" class="form-label small">Admin rate (R/h)</label>
+                  <input type="number" class="form-control form-control-sm" id="adminRatePerHour" min="0" max="1000" step="1" required>
+                  <div class="invalid-feedback">0 to 1000</div>
+                </div>
+                <div class="col-6">
+                  <label for="workingDaysPerMonth" class="form-label small">Working days / month</label>
+                  <input type="number" class="form-control form-control-sm" id="workingDaysPerMonth" min="1" max="31" step="1" required>
+                  <div class="invalid-feedback">1 to 31</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm mt-3" id="resetInputs">
+                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Back to interview values</button>
+            </form>
+          </section>
+        </div>
+
+        <!-- Table + charts -->
+        <div class="col-lg-8">
+          <section class="ml-card mb-4" aria-labelledby="tblH">
+            <h2 id="tblH" class="h3 mb-3">Before and after</h2>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <caption class="small">Before means every file is on paper. After uses the digitised share set on the left.</caption>
+                <thead><tr><th scope="col">KPI</th><th scope="col" class="text-end">Before</th><th scope="col" class="text-end">With MediLink</th><th scope="col" class="text-end">Change</th></tr></thead>
+                <tbody id="kpiTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <section class="ml-card" aria-labelledby="c1H">
+                <h2 id="c1H" class="h6 mb-1">Admin hours lost to delays, per day</h2>
+                <p class="small text-muted mb-2">Before vs with MediLink</p>
+                <div style="height:220px"><canvas id="barChart" role="img" aria-label="Bar chart of admin hours lost per day, before and with MediLink"></canvas></div>
+              </section>
+            </div>
+            <div class="col-md-6">
+              <section class="ml-card" aria-labelledby="c2H">
+                <h2 id="c2H" class="h6 mb-1">Monthly cost of delays as files are digitised</h2>
+                <p class="small text-muted mb-2">Rand per month, by share of files digitised</p>
+                <div style="height:220px"><canvas id="lineChart" role="img" aria-label="Line chart of monthly delay cost falling as more files are digitised"></canvas></div>
+              </section>
+            </div>
+          </div>
+
+          <!-- Live operations from the app's data -->
+          <section class="ml-card" aria-labelledby="opsH">
+            <h2 id="opsH" class="h3 mb-1">Live from MediLink</h2>
+            <p class="small text-muted mb-3">Counts from the requests and records in the app right now.</p>
+            <div id="opsBlock"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="../static/auth-hash.js"></script>
+  <script src="../static/data.js"></script>
+  <script src="../static/components.js"></script>
+  <script src="../static/kpi-model.js"></script>
+  <script src="../static/dashboard.js"></script>
+</body>
+</html>
