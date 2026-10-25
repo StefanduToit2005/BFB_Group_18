@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MediLink | Log in</title>
+  <meta name="description" content="MediLink connects patient messages, admin and the neurologist to one digital patient record.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="../static/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main id="main">
+    <section class="ml-hero ml-hero-compact">
+      <div class="container">
+        <h1 class="mb-2">Welcome to MediLink</h1>
+        <p class="mb-0">One digital record per patient. Every request linked to the right file, in seconds.</p>
+      </div>
+    </section>
+
+    <div class="container py-5">
+      <div id="pageAlert" class="alert d-none" role="status"></div>
+
+      <!-- Already logged in -->
+      <section id="loggedInView" class="row justify-content-center d-none">
+        <div class="col-md-7 col-lg-5">
+          <div class="ml-card text-center">
+            <span class="role-icon mb-3"><i class="bi bi-person-check" aria-hidden="true"></i></span>
+            <h2 class="h3">You're logged in</h2>
+            <p class="text-muted mb-4" id="loggedInText"></p>
+            <div class="d-flex flex-wrap gap-2 justify-content-center">
+              <a href="#" class="btn btn-primary" id="continueBtn">Continue</a>
+              <button type="button" class="btn btn-outline-secondary" id="switchBtn">Log out and switch user</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 1: choose a role -->
+      <section id="roleView" aria-labelledby="roleHeading">
+        <h2 id="roleHeading" class="mb-1">Who are you?</h2>
+        <p class="text-muted mb-4">Choose your role to log in. Each role only sees the pages it needs.</p>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <button type="button" class="ml-card role-card role-pick w-100 text-start" data-role="patient">
+              <span class="role-icon mb-3"><i class="bi bi-person" aria-hidden="true"></i></span>
+              <h3>Patient</h3>
+              <p class="text-muted mb-3">Send requests to the practice and see replies from the doctor.</p>
+              <span class="small fw-semibold text-primary">Log in with your patient number <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+            </button>
+          </div>
+          <div class="col-md-4">
+            <button type="button" class="ml-card role-card role-pick w-100 text-start" data-role="admin">
+              <span class="role-icon mb-3"><i class="bi bi-inbox" aria-hidden="true"></i></span>
+              <h3>Administrator</h3>
+              <p class="text-muted mb-3">Manage the request queue, patient records and registrations.</p>
+              <span class="small fw-semibold text-primary">Staff log in <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+            </button>
+          </div>
+          <div class="col-md-4">
+            <button type="button" class="ml-card role-card role-pick w-100 text-start" data-role="neurologist">
+              <span class="role-icon mb-3"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i></span>
+              <h3>Neurologist</h3>
+              <p class="text-muted mb-3">Prioritised requests, full patient files and the impact dashboard.</p>
+              <span class="small fw-semibold text-primary">Staff log in <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="ml-card mt-4">
+          <h2 class="h6 small-caps mb-3">What each role can see</h2>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle text-center">
+              <thead><tr><th scope="col" class="text-start">Page</th><th scope="col">Patient</th><th scope="col">Admin</th><th scope="col">Neurologist</th></tr></thead>
+              <tbody>
+                <tr><th scope="row" class="text-start fw-normal">Patient portal</th><td>Own record only</td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td></tr>
+                <tr><th scope="row" class="text-start fw-normal">Request queue</th><td><i class="bi bi-x-lg text-muted" aria-label="No"></i></td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td></tr>
+                <tr><th scope="row" class="text-start fw-normal">Patient records and files</th><td><i class="bi bi-x-lg text-muted" aria-label="No"></i></td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td></tr>
+                <tr><th scope="row" class="text-start fw-normal">Neurologist requests</th><td><i class="bi bi-x-lg text-muted" aria-label="No"></i></td><td><i class="bi bi-x-lg text-muted" aria-label="No"></i></td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td></tr>
+                <tr><th scope="row" class="text-start fw-normal">Impact dashboard</th><td><i class="bi bi-x-lg text-muted" aria-label="No"></i></td><td><i class="bi bi-x-lg text-muted" aria-label="No"></i></td><td><i class="bi bi-check-lg text-success" aria-label="Yes"></i></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: log in -->
+      <section id="loginView" class="row justify-content-center g-4 d-none" aria-labelledby="loginHeading">
+        <div class="col-md-7 col-lg-5">
+          <div class="ml-card">
+            <button type="button" class="btn btn-link btn-sm p-0 mb-3 text-decoration-none" id="backBtn">
+              <i class="bi bi-arrow-left" aria-hidden="true"></i> Choose a different role
+            </button>
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <span class="role-icon" id="loginIcon"><i class="bi bi-person" aria-hidden="true"></i></span>
+              <div>
+                <div class="small-caps">Log in as</div>
+                <h2 id="loginHeading" class="h3 mb-0">Patient</h2>
+              </div>
+            </div>
+            <div id="loginAlert" class="alert alert-danger d-none" role="alert"></div>
+            <form id="loginForm" novalidate>
+              <div class="mb-3">
+                <label for="username" class="form-label required" id="usernameLabel">Patient number</label>
+                <input type="text" class="form-control" id="username" autocomplete="username" required aria-describedby="usernameHelp">
+                <div id="usernameHelp" class="form-text">Looks like ML-1234. You got it when you registered.</div>
+                <div class="invalid-feedback" id="usernameError">Please enter your patient number.</div>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label required">Password</label>
+                <div class="input-group has-validation">
+                  <input type="password" class="form-control" id="password" autocomplete="current-password" required>
+                  <button class="btn btn-outline-secondary" type="button" id="showPw" aria-label="Show password" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button>
+                  <div class="invalid-feedback">Please enter your password.</div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+                <span class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>Log in
+              </button>
+            </form>
+            <div id="patientExtras">
+              <hr>
+              <p class="small mb-0">New patient? <a href="patient-register.html">Register here</a> to get your patient number.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-5 col-lg-4">
+          <div class="ml-card bg-light">
+            <h2 class="h6 small-caps mb-2">Demo accounts</h2>
+            <p class="small text-muted">Prototype only. Real accounts will be checked by the Flask server.</p>
+            <dl class="small mb-0">
+              <dt>Patient</dt><dd><code>ML-1001</code> &middot; <code>Patient@123</code></dd>
+              <dt>Administrator</dt><dd><code>admin</code> &middot; <code>Admin@123</code></dd>
+              <dt>Neurologist</dt><dd class="mb-0"><code>neuro</code> &middot; <code>Neuro@123</code></dd>
+            </dl>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../static/auth-hash.js"></script>
+  <script src="../static/data.js"></script>
+  <script src="../static/components.js"></script>
+  <script src="../static/login.js"></script>
+</body>
+</html>
