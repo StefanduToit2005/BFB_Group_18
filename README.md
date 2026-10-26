@@ -147,3 +147,7 @@ To connect the back end, replace the inside of each function with a `fetch()` ca
 ---
 
 All patient data in this prototype is made up.
+
+## Supply Chain Model (`models/retrieval.py`)
+
+This module quantifies the cost of the practice's manual file-retrieval delays, which is the problem MediLink is designed to solve. It is a standalone Python module with no dependency on Flask or the database, so the web application can call it later without changing it. It contains three functions that build on one another. `delayed_retrievals_per_day()` multiplies the daily number of file retrievals by the delay rate to give the expected number of delayed retrievals. `wasted_hours_per_day()` converts those delays into lost administrative hours using the average extra minutes per delay. `monthly_cost()` multiplies those hours by the administrator's hourly rate and the number of working days to give the monthly cost of the delays. Using the figures from the proposal (22 retrievals per day, a 45% delay rate, 10 extra minutes per delay, R78 per hour and 22 working days), the model gives about 9.9 delayed retrievals and 1.65 wasted hours per day, which is roughly R2,831 per month. The proposal's figure of about R2,900 comes from rounding the wasted time up to 1.7 hours. Every function has a docstring that states its formula, inputs and return value. The functions are checked against hand calculations by the unit tests in `tests/test_retrieval.py`, which you can run from the project folder with `python -m pytest`.
