@@ -1,0 +1,32 @@
+-- Test data for the API tests. Loaded after schema.sql into the TEST database only.
+INSERT INTO staff_users (username, role, password_hash, full_name) VALUES
+('admin', 'admin', 'scrypt:32768:8:1$XppZsRfgR8BsNeb4$8e1e9b759ec44f12b48b2bab02ebf43c7ec0302b32c7b0a5b7f3e2975dd45b6b1772c8765248efa0834198727a52a641298e6e9c148c730c1bcd6c38020935fa', 'Practice administrator'),
+('neuro', 'neurologist', 'scrypt:32768:8:1$hnm7IMKGZJh3O51A$9f74be4f407f6e536d41dfd882a8263e9e747d5566cdbbcbc2e39acf87ca9a4cf0774f3978d02b47787306ebb8ebe6af1cf2a1c4e8195de1cfea958e30db7a24', 'Dr Neurologist');
+INSERT INTO patients (patient_no,id_type,id_number,country,date_of_birth,first_name,surname,email,phone,address,password_hash,digitised,consent_at) VALUES
+('ML-1001','SA ID','6804125254085','South Africa','1968-04-12','Johan','van Wyk','johan.vanwyk@example.com','0821234567','14 Jacaranda Street, Hatfield, Pretoria, 0083','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',1,NOW()),
+('ML-1002','SA ID','7509236766088','South Africa','1975-09-23','Thandi','Mokoena','thandi.m@example.com','0739876543','7 Protea Avenue, Midstream Estate, Centurion, 1692','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',1,NOW()),
+('ML-1003','SA ID','8201170174086','South Africa','1982-01-17','Pieter','Botha','pbotha@example.com','0845551234','22 Lynnwood Road, Lynnwood, Pretoria, 0081','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',0,NOW()),
+('ML-1004','SA ID','5903058196080','South Africa','1959-03-05','Margaret','Naidoo','m.naidoo@example.com','0827778888','3 Oak Lane, Waterkloof, Pretoria, 0145','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',1,NOW()),
+('ML-1005','SA ID','9106285696080','South Africa','1991-06-28','Lerato','Dlamini','lerato.dlamini@example.com','0761112222','18 Burnett Street, Hatfield, Pretoria, 0083','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',0,NOW()),
+('ML-1006','SA ID','4708110619081','South Africa','1947-08-11','Hendrik','Steyn','hsteyn@example.com','0823334444','41 Atterbury Road, Menlo Park, Pretoria, 0081','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',0,NOW()),
+('ML-1007','SA ID','8802143138080','South Africa','1988-02-14','Aisha','Patel','aisha.patel@example.com','0715556666','9 Duncan Street, Brooklyn, Pretoria, 0181','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',1,NOW()),
+('ML-1008','SA ID','6307301544089','South Africa','1963-07-30','Sipho','Khumalo','sipho.k@example.com','0839990000','56 Garsfontein Road, Moreleta Park, Pretoria, 0044','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',0,NOW()),
+('ML-1009','Passport','FN482913','Zimbabwe','1986-03-14','Tendai','Moyo','tendai.moyo@example.com','+263771234567','12 Festival Street, Hatfield, Pretoria, 0083','scrypt:32768:8:1$Bww94cF5MGPoag5U$2bd13e945ebee62110312f1e36797dcea17af982b222b1b17874b2e03fc49513daf7c9e1642940af72baf0953bb53658202c490d755fc5c9ac39ac929964869a',0,NOW());
+INSERT INTO requests (patient_no,channel,category,subject,body,urgency,status,admin_note,response,created_at,completed_at) VALUES
+('ML-1006','Email','Referral / report request','Urgent referral letter for neurosurgery','I need a referral letter with my full history by tomorrow morning.','urgent','forwarded','Paper file. Needs full history.',NULL,NOW() - INTERVAL 3 HOUR,NULL),
+('ML-1002','Patient portal','Prescription question','Repeat script','Can I get a repeat prescription?','soon','new',NULL,NULL,NOW() - INTERVAL 5 HOUR,NULL),
+('ML-1005','Phone','New symptoms','Dizziness getting worse','Dizziness now daily and she had a fall yesterday.','urgent','new',NULL,NULL,NOW() - INTERVAL 2 HOUR,NULL),
+('ML-1001','Patient portal','Follow-up appointment','Book 6-month follow-up','Mornings work best.','routine','new',NULL,NULL,NOW() - INTERVAL 1 DAY,NULL),
+('ML-1004','Email','Referral / report request','Report for curatorship application','Attorney needs an updated report.','soon','forwarded','Deadline end of next week.',NULL,NOW() - INTERVAL 26 HOUR,NULL),
+('ML-1003','In person','Prescription question','Medication side effects','Feeling drowsy since dose change.','routine','forwarded',NULL,NULL,NOW() - INTERVAL 30 HOUR,NULL),
+('ML-1007','Patient portal','Test results','EEG results question','What do my sleep EEG results mean?','routine','completed',NULL,'Results explained by email.',NOW() - INTERVAL 2 DAY,NOW() - INTERVAL 1 DAY),
+('ML-1008','Phone','Follow-up appointment','Wife phoned to book follow-up','Next available slot.','routine','completed',NULL,'Booked for Tuesday 10:00.',NOW() - INTERVAL 3 DAY,NOW() - INTERVAL 3 DAY + INTERVAL 1 HOUR),
+('ML-1003','Phone','Other','Repeat sick note','Needs a sick note copy.','routine','completed',NULL,'Emailed.',NOW() - INTERVAL 20 DAY,NOW() - INTERVAL 19 DAY),
+('ML-1006','In person','Follow-up appointment','Tremor review booking','Asked for a tremor review.','routine','completed',NULL,'Booked.',NOW() - INTERVAL 10 DAY,NOW() - INTERVAL 10 DAY + INTERVAL 2 HOUR),
+('ML-1009','Patient portal','New symptoms','Numbness in feet','Numbness getting worse.','soon','new',NULL,NULL,NOW() - INTERVAL 4 HOUR,NULL);
+INSERT INTO medical_history (patient_no,event_date,event_type,note) VALUES
+('ML-1001','2025-09-10','Consultation','Initial assessment for recurring headaches. MRI requested.'),
+('ML-1001','2026-07-20','Follow-up','Migraine frequency down after medication change.'),
+('ML-1003','2024-05-05','Consultation','Long-standing epilepsy patient. On anti-seizure medication.'),
+('ML-1006','2022-10-01','Consultation','Parkinson''s disease diagnosed.'),
+('ML-1009','2026-10-20','Consultation','Referred by GP for recurring numbness in both feet.');
