@@ -55,10 +55,13 @@ def retrieval_kpis(inputs, digitised_share):
 
     def scenario(delay_rate, avg_minutes):
         hours = wasted_hours_per_day(i["retrievals_per_day"], delay_rate, i["extra_minutes"])
+        cost = monthly_cost(hours, i["hourly_rate"], i["working_days"])
         return {
             "delayed_per_day": round(delayed_retrievals_per_day(i["retrievals_per_day"], delay_rate), 2),
             "wasted_hours_per_day": round(hours, 2),
-            "monthly_cost": round(monthly_cost(hours, i["hourly_rate"], i["working_days"]), 2),
+            "total_retrieval_hours_per_day": round(i["retrievals_per_day"] * avg_minutes / 60, 2),
+            "monthly_cost": round(cost, 2),
+            "yearly_cost": round(cost * 12, 2),
             "avg_retrieval_minutes": round(avg_minutes, 2),
         }
 
@@ -73,6 +76,9 @@ def retrieval_kpis(inputs, digitised_share):
             "hours_per_day": round(before["wasted_hours_per_day"] - after["wasted_hours_per_day"], 2),
             "per_month": round(before["monthly_cost"] - after["monthly_cost"], 2),
             "per_year": round((before["monthly_cost"] - after["monthly_cost"]) * 12, 2),
+            "retrieval_time_cut_pct": round(
+                (1 - after["avg_retrieval_minutes"] / before["avg_retrieval_minutes"]) * 100, 1)
+            if before["avg_retrieval_minutes"] else 0,
         },
     }
 
