@@ -91,6 +91,23 @@ from `models/retrieval.py`.
 2. `GET /api/kpis/digitise-priority` feeds each paper-file patient's request rate into the model
    to rank which files are worth scanning first.
 
+### `GET /api/kpis/retrieval` response
+
+Query parameters (all optional, defaults from the interview): `retrievals_per_day`, `delay_rate` (0 to 1),
+`extra_minutes`, `best_case_minutes`, `digital_lookup_minutes`, `hourly_rate`, `working_days`, `digitised_share` (0 to 1).
+
+```json
+{
+  "inputs": { "retrievals_per_day": 22, "delay_rate": 0.45, "extra_minutes": 10, "best_case_minutes": 5,
+              "digital_lookup_minutes": 1, "hourly_rate": 78, "working_days": 22, "digitised_share": 0.444 },
+  "digitised_share_source": "database",
+  "before": { "delayed_per_day": 9.9, "wasted_hours_per_day": 1.65, "total_retrieval_hours_per_day": 3.48,
+              "avg_retrieval_minutes": 9.5, "monthly_cost": 2831.4, "yearly_cost": 33976.8 },
+  "after":  { "...same fields...": "with MediLink" },
+  "savings": { "hours_per_day": 0.73, "per_month": 1258.4, "per_year": 15100.8, "retrieval_time_cut_pct": 46.8 }
+}
+```
+
 ## Logging
 
 `app.py` logs to the console and to `logs/medilink.log` (rotates at 1 MB, keeps 5 files).
