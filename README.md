@@ -86,6 +86,8 @@ Passwords are stored as werkzeug hashes, never as plain text. All people and rec
 
 Five tables. `patients` is the centre, keyed on `patient_no` (for example ML-1001). `requests`, `documents` and `medical_history` each belong to one patient. `staff_users` holds the admin and the neurologist. A request's `created_by` and a document's `uploaded_by` point at the staff member who captured it, and are empty when a patient sent the request from the portal. Deleting a patient who still has requests, documents or history is blocked (`ON DELETE RESTRICT`), so records can't be orphaned. If a staff user is deleted their old requests and documents stay, with `created_by` or `uploaded_by` set to empty (`ON DELETE SET NULL`).
 
+**Indexes.** `staff_users` unique on `username`. `patients` unique on (`id_type`, `id_number`, `country`), plus indexes on (`surname`, `first_name`), `email` and `digitised`. `requests` indexes on (`status`, `urgency`) and `created_at`. `medical_history` index on (`patient_no`, `event_date`). Every foreign key also has its own index.
+
 ## Backup and restore (mysqldump)
 
 `mysqldump` and `mysql` come with MySQL Server. On Windows they are in `C:\Program Files\MySQL\MySQL Server 8.0\bin`. Either add that folder to your PATH or run the commands from inside it.
