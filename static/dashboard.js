@@ -87,11 +87,57 @@ const lineChart = new Chart($("lineChart"), {
 });
 
 // ---------- render ----------
-function update() {
+async function update(useLiveShare = false) {
   const inputs = readInputs();
   $("digiOut").textContent = `${$("digitisedShare").value}%`;
   if (!inputs) return;
-  const r = computeKpis(inputs);
+
+  const queryInputs = { ...inputs };
+  if (useLiveShare) delete queryInputs.digitisedShare; // lets Flask use real DB digitised share
+
+  let r;
+  try {
+    const api = await MediLinkAPI.getRetrievalKpis(queryInputs);
+    const b = api.before || {};
+    const a = api.after || {};
+    const s = api.savings || {};
+    r = {
+      before: {
+        avgRetrievalMin: b.avg_retrieval_min ?? b.avgRetrievalMin,
+        delayedPerDay: b.delayed_per_day ?? b.delayedPerDay,
+        delayHoursPerDay: b.delay_hours_per_day ?? b.delayHoursPerDay,
+        totalRetrievalHoursPerDay: b.total_retrieval_hours_per_day ?? b.totalRetrievalHoursPerDay,
+        delayCost: {
+          perMonth: (b.delay_cost && b.delay_cost.per_month) ?? b.monthly_cost ?? (b.delayCost && b.delayCost.perMonth),
+          perYear: (b.delay_cost && b.delay_cost.per_year) ?? b.yearly_cost ?? (b.delayCost && b.delayCost.perYear)
+        }
+      },
+      after: {
+        avgRetrievalMin: a.avg_retrieval_min ?? a.avgRetrievalMin,
+        delayedPerDay: a.delayed_per_day ?? a.delayedPerDay,
+        delayHoursPerDay: a.delay_hours_per_day ?? a.delayHoursPerDay,
+        totalRetrievalHoursPerDay: a.total_retrieval_hours_per_day ?? a.totalRetrievalHoursPerDay,
+        delayCost: {
+          perMonth: (a.delay_cost && a.delay_cost.per_month) ?? a.monthly_cost ?? (a.delayCost && a.delayCost.perMonth),
+          perYear: (a.delay_cost && a.delay_cost.per_year) ?? a.yearly_cost ?? (a.delayCost && a.delayCost.perYear)
+        }
+      },
+      savings: {
+        hoursPerDay: s.hours_per_day ?? s.hoursPerDay,
+        perMonth: s.per_month ?? s.perMonth,
+        perYear: s.per_year ?? s.perYear,
+        retrievalTimeCutPct: s.retrieval_time_cut_pct ?? s.retrievalTimeCutPct
+      }
+    };
+    if (useLiveShare && api.inputs && api.inputs.digitised_share !== undefined) {
+      const pct = Math.round(api.inputs.digitised_share * 100);
+      $("digitisedShare").value = pct;
+      $("digiOut").textContent = `${pct}%`;
+    }
+  } catch (err) {
+    r = computeKpis(inputs);
+  }
+
   const { before: b, after: a, savings: s } = r;
 
   $("hSaved").textContent = hrs(s.hoursPerDay);
@@ -118,7 +164,7 @@ function update() {
   barChart.data.datasets[0].data = [b.delayHoursPerDay, a.delayHoursPerDay];
   barChart.update();
 
-  currentIdx = Math.round(inputs.digitisedShare * 10);
+  currentIdx = Math.round((+$("digitisedShare").value / 100) * 10);
   lineChart.data.datasets[0].data = shares.map(sh => computeKpis({ ...inputs, digitisedShare: sh / 100 }).after.delayCost.perMonth);
   lineChart.update();
 }
@@ -169,5 +215,5 @@ async function loadOps() {
 }
 
 fillDefaults();
-update();
+update(true);
 loadOps();
