@@ -6,6 +6,114 @@ Joshua Smit 24577155
 Tendaishe Mhuriro 23589711
 
 
+# Database setup (MySQL)
+
+MediLink stores everything in MySQL 8. There are two databases. `medilink` is the one the app uses. `medilink_test` is an empty one that pytest wipes and refills every run, so the tests never touch your real data.
+
+## 1. Create the two databases
+
+Open MySQL Workbench (or the MySQL command line) and run this once.
+
+```sql
+CREATE DATABASE medilink CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE medilink_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+You don't create the tables yourself. `seed.py` builds them from `schema.sql`.
+
+## 2. Make your .env file
+
+Copy `.env.example` to a new file called `.env` in the project folder and put in your own MySQL password and a long random secret key.
+
+```
+FLASK_ENV_NAME=development
+SECRET_KEY=put-a-long-random-string-here
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your-mysql-password
+DB_NAME=medilink
+TEST_DB_NAME=medilink_test
+```
+
+`.env` is in `.gitignore`, so your password never goes to GitHub.
+
+## 3. Install the packages and run the seed
+
+In the VS Code terminal, from the project folder:
+
+```
+python -m venv venv
+venv\Scripts\activate            (Windows)   or   source venv/bin/activate   (Mac)
+pip install -r requirements.txt
+python seed.py
+```
+
+Type `yes` when it asks. The seed drops and rebuilds all five tables from `schema.sql`, then loads the demo data. It prints a row count for each table when it's done.
+
+| Table | Demo rows |
+|---|---|
+| staff_users | 2 |
+| patients | 9 |
+| requests | 11 |
+| documents | 8 |
+| medical_history | 8 |
+
+The 8 document rows each point at a small real PDF that the seed writes into `uploads/<patient_no>/`, so they open and download in the app just like a real upload. The four digitised patients (ML-1001, ML-1002, ML-1004, ML-1007) each have their scanned paper file.
+
+Run `python seed.py` again at any time to reset the demo data. Use `python seed.py --yes` to skip the question.
+
+## 4. Run the app and the tests
+
+```
+python app.py
+python -m pytest
+```
+
+## Demo logins
+
+| Role | Username | Password |
+|---|---|---|
+| Administrator | `admin` | `Admin@123` |
+| Neurologist | `neuro` | `Neuro@123` |
+| Patient | `ML-1001` to `ML-1009` | `Patient@123` |
+
+Passwords are stored as werkzeug hashes, never as plain text. All people and records are made up.
+
+## ERD
+
+![MediLink ERD](docs/ERD.png)
+
+Five tables. `patients` is the centre, keyed on `patient_no` (for example ML-1001). `requests`, `documents` and `medical_history` each belong to one patient. `staff_users` holds the admin and the neurologist. A request's `created_by` and a document's `uploaded_by` point at the staff member who captured it, and are empty when a patient sent the request from the portal. Deleting a patient who still has requests, documents or history is blocked (`ON DELETE RESTRICT`), so records can't be orphaned. If a staff user is deleted their old requests and documents stay, with `created_by` or `uploaded_by` set to empty (`ON DELETE SET NULL`).
+
+## Backup and restore (mysqldump)
+
+`mysqldump` and `mysql` come with MySQL Server. On Windows they are in `C:\Program Files\MySQL\MySQL Server 8.0\bin`. Either add that folder to your PATH or run the commands from inside it.
+
+**Back up** (it asks for your MySQL password):
+
+```
+mkdir backups
+mysqldump -u root -p --single-transaction medilink --result-file=backups/medilink_backup.sql
+```
+
+**Restore** into the `medilink` database (this replaces the tables with the ones in the backup):
+
+```
+mysql -u root -p medilink -e "source backups/medilink_backup.sql"
+```
+
+We use `--result-file` and `source` instead of `>` and `<` because PowerShell saves `>` output in a format MySQL can't read back. The dump holds the database only. Scanned files live in `uploads/`, so copy that folder next to the dump when you back up. `backups/` is in `.gitignore` because a dump holds patient data.
+
+## Rollback
+
+There are three levels of rollback.
+
+1. **A single action.** Writes that change more than one table run in one transaction. For example, uploading a whole paper file saves the document row and marks the patient as digitised together. If anything fails, `conn.rollback()` undoes both and the uploaded file is deleted again, so the database and `uploads/` never disagree. `db.py` also rolls back any unsaved work when a request ends with an error. `seed.py` rolls back too if loading the demo data fails.
+2. **The data.** Take a backup with `mysqldump` before any risky change (a schema change, a bulk edit, the live demo). If something goes wrong, restore that backup with the command above. For the demo data, running `python seed.py` puts everything back to a known state.
+3. **The code and schema.** `schema.sql` is in Git, so every schema change is a commit. To undo one, run `git revert <commit>` on a new branch, open a pull request, then back up and re-run `python seed.py` (or restore your backup) so the database matches the schema again. Never edit `main` directly. Every change goes through a pull request, so a bad change can be reverted in one step.
+
+
 # MediLink front end
 
 BFB 321 Supply Chain Technologies. Step 1 of the web app guide, the front end build.
