@@ -103,9 +103,9 @@ async function update(useLiveShare = false) {
     const s = api.savings || {};
     r = {
       before: {
-        avgRetrievalMin: b.avg_retrieval_min ?? b.avgRetrievalMin,
+        avgRetrievalMin: b.avg_retrieval_minutes ?? b.avgRetrievalMin,
         delayedPerDay: b.delayed_per_day ?? b.delayedPerDay,
-        delayHoursPerDay: b.delay_hours_per_day ?? b.delayHoursPerDay,
+        delayHoursPerDay: b.wasted_hours_per_day ?? b.delayHoursPerDay,
         totalRetrievalHoursPerDay: b.total_retrieval_hours_per_day ?? b.totalRetrievalHoursPerDay,
         delayCost: {
           perMonth: (b.delay_cost && b.delay_cost.per_month) ?? b.monthly_cost ?? (b.delayCost && b.delayCost.perMonth),
@@ -113,9 +113,9 @@ async function update(useLiveShare = false) {
         }
       },
       after: {
-        avgRetrievalMin: a.avg_retrieval_min ?? a.avgRetrievalMin,
+        avgRetrievalMin: a.avg_retrieval_minutes ?? a.avgRetrievalMin,
         delayedPerDay: a.delayed_per_day ?? a.delayedPerDay,
-        delayHoursPerDay: a.delay_hours_per_day ?? a.delayHoursPerDay,
+        delayHoursPerDay: a.wasted_hours_per_day ?? a.delayHoursPerDay,
         totalRetrievalHoursPerDay: a.total_retrieval_hours_per_day ?? a.totalRetrievalHoursPerDay,
         delayCost: {
           perMonth: (a.delay_cost && a.delay_cost.per_month) ?? a.monthly_cost ?? (a.delayCost && a.delayCost.perMonth),
@@ -169,7 +169,7 @@ async function update(useLiveShare = false) {
   lineChart.update();
 }
 
-$("inputs").addEventListener("input", update);
+$("inputs").addEventListener("input", () => update());
 $("resetInputs").addEventListener("click", () => { fillDefaults(); update(); });
 
 // ---------- live ops ----------

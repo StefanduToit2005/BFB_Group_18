@@ -286,11 +286,11 @@ const MediLinkAPI = (() => {
       const params = new URLSearchParams();
       if (inputs.retrievalsPerDay !== undefined) params.set("retrievals_per_day", inputs.retrievalsPerDay);
       if (inputs.delayRate !== undefined) params.set("delay_rate", inputs.delayRate);
-      if (inputs.extraMinutesPerDelay !== undefined) params.set("extra_minutes_per_delay", inputs.extraMinutesPerDelay);
-      if (inputs.baseMinutes !== undefined) params.set("base_minutes", inputs.baseMinutes);
+      if (inputs.extraMinutesPerDelay !== undefined) params.set("extra_minutes", inputs.extraMinutesPerDelay);
+      if (inputs.baseMinutes !== undefined) params.set("best_case_minutes", inputs.baseMinutes);
       if (inputs.digitalLookupMinutes !== undefined) params.set("digital_lookup_minutes", inputs.digitalLookupMinutes);
-      if (inputs.adminRatePerHour !== undefined) params.set("admin_rate_per_hour", inputs.adminRatePerHour);
-      if (inputs.workingDaysPerMonth !== undefined) params.set("working_days_per_month", inputs.workingDaysPerMonth);
+      if (inputs.adminRatePerHour !== undefined) params.set("hourly_rate", inputs.adminRatePerHour);
+      if (inputs.workingDaysPerMonth !== undefined) params.set("working_days", inputs.workingDaysPerMonth);
       if (inputs.digitisedShare !== undefined) params.set("digitised_share", inputs.digitisedShare);
       return apiFetch(`/api/kpis/retrieval?${params}`);
     },

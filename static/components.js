@@ -77,22 +77,13 @@ const UI = (() => {
   function renderFooter(user) {
     const el = document.getElementById("site-footer");
     if (!el) return;
-    const canReset = user && STAFF.includes(user.role);
     el.innerHTML = `
       <footer class="ml-footer">
         <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
-          <span>MediLink prototype &middot; BFB 321 Supply Chain Technologies &middot; Sample data only</span>
-          ${canReset ? `<button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" id="resetDemoBtn">
-            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset demo data
-          </button>` : ""}
+          <span>MediLink &middot; BFB 321 Supply Chain Technologies</span>
         </div>
       </footer>
       <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastArea" aria-live="polite" aria-atomic="true"></div>`;
-    document.getElementById("resetDemoBtn")?.addEventListener("click", async () => {
-      await MediLinkAPI.resetDemo();
-      toast("Demo data has been reset.");
-      setTimeout(() => location.reload(), 600);
-    });
   }
 
   function toast(message, type = "success") {
