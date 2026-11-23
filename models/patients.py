@@ -42,8 +42,10 @@ def get_patient(patient_no):
         "SELECT id, event_date, event_type, note FROM medical_history "
         "WHERE patient_no = %s ORDER BY event_date DESC", (patient_no,)))
     patient["documents"] = clean_rows(query_all(
-        "SELECT id, file_name, mime_type, size_bytes, doc_type, note, created_at FROM documents "
-        "WHERE patient_no = %s ORDER BY created_at DESC", (patient_no,)))
+        """SELECT d.id, d.file_name, d.mime_type, d.size_bytes, d.doc_type, d.note, d.created_at,
+                  s.full_name AS uploaded_by_name
+           FROM documents d LEFT JOIN staff_users s ON s.id = d.uploaded_by
+           WHERE d.patient_no = %s ORDER BY d.created_at DESC, d.id DESC""", (patient_no,)))
     return patient
 
 

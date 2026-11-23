@@ -26,6 +26,7 @@ def test_scanning_a_file_changes_the_model_kpis(client, login):
     # The patient is now digitised, so the model shows a bigger saving.
     patient = client.get("/api/patients/ML-1003").get_json()["patient"]
     assert patient["digitised"] is True and patient["documents"][0]["file_name"] == "Botha_CamScanner.pdf"
+    assert patient["documents"][0]["uploaded_by_name"] == "Dr Neurologist"
     after = client.get("/api/kpis/retrieval").get_json()
     assert after["inputs"]["digitised_share"] > before["inputs"]["digitised_share"]
     assert after["savings"]["per_month"] > before["savings"]["per_month"]
@@ -36,8 +37,12 @@ def test_retrieval_model_matches_baseline(client, login):
     k = client.get("/api/kpis/retrieval?digitised_share=0").get_json()
     assert k["before"]["wasted_hours_per_day"] == 1.65
     assert k["before"]["monthly_cost"] == 2831.4
+    assert k["before"]["yearly_cost"] == 33976.8
+    assert k["before"]["avg_retrieval_minutes"] == 9.5
+    assert k["before"]["total_retrieval_hours_per_day"] == round(22 * 9.5 / 60, 2)
     full = client.get("/api/kpis/retrieval?digitised_share=1").get_json()
     assert full["after"]["monthly_cost"] == 0 and full["savings"]["per_month"] == 2831.4
+    assert full["savings"]["retrieval_time_cut_pct"] == round((1 - 1 / 9.5) * 100, 1)
 
 
 def test_kpi_inputs_are_validated(client, login):
