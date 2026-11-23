@@ -19,8 +19,10 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
 import db  # also loads .env
+from models.documents import DOC_TYPES
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(ROOT, "uploads")  # same folder app.py uses
 
 STAFF = [
     ("admin", "admin", "Admin@123", "Practice administrator"),
@@ -92,6 +94,46 @@ HISTORY = [
 ]
 
 
+# patient_no, file_name, doc_type, note, days_ago_uploaded
+# doc_type must be one of DOC_TYPES in models/documents.py.
+# The four digitised patients (ML-1001, 1002, 1004, 1007) each get their scanned paper file.
+DOCUMENTS = [
+    ("ML-1001", "vanwyk_paper_file.pdf", "Scanned paper record", "Full paper file scanned in.", 30),
+    ("ML-1001", "vanwyk_mri_report.pdf", "Imaging report", "MRI brain, September 2025.", 29),
+    ("ML-1002", "mokoena_paper_file.pdf", "Scanned paper record", "Full paper file scanned in.", 21),
+    ("ML-1004", "naidoo_paper_file.pdf", "Scanned paper record", "Full paper file scanned in.", 14),
+    ("ML-1004", "naidoo_eeg_report.pdf", "EEG report", "Routine EEG, February 2026.", 14),
+    ("ML-1007", "patel_paper_file.pdf", "Scanned paper record", "Full paper file scanned in.", 7),
+    ("ML-1007", "patel_sleep_eeg.pdf", "EEG report", "Sleep EEG results.", 6),
+    ("ML-1009", "moyo_gp_referral.pdf", "Referral letter", "GP referral for numbness in both feet.", 3),
+]
+
+
+def make_demo_pdf(title):
+    """Build a tiny one-page PDF with one line of text, so the demo files really open."""
+    text = title.replace("\\", "").replace("(", "").replace(")", "")
+    stream = f"BT /F1 18 Tf 72 720 Td (MediLink demo file - {text}) Tj ET".encode()
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+        b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    pdf = b"%PDF-1.4\n"
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(pdf))
+        pdf += f"{number} 0 obj\n".encode() + body + b"\nendobj\n"
+    xref_at = len(pdf)
+    pdf += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode()
+    for offset in offsets:
+        pdf += f"{offset:010d} 00000 n \n".encode()
+    pdf += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_at}\n%%EOF\n".encode()
+    return pdf
+
+
 def run_sql_file(cursor, path):
     """Run every statement in a .sql file, skipping comment lines."""
     with open(path, encoding="utf-8") as f:
@@ -136,6 +178,23 @@ def load_demo_data(cursor):
         cursor.execute(
             "INSERT INTO medical_history (patient_no, event_date, event_type, note) VALUES (%s, %s, %s, %s)",
             row)
+
+    # Each document row points at a real PDF in uploads/<patient_no>/, the same way an upload does.
+    for patient_no, file_name, doc_type, note, days_ago in DOCUMENTS:
+        if doc_type not in DOC_TYPES:
+            raise ValueError(f"{doc_type} is not in DOC_TYPES in models/documents.py")
+        folder = os.path.join(UPLOAD_FOLDER, patient_no)
+        os.makedirs(folder, exist_ok=True)
+        stored_name = f"demo_{file_name}"
+        pdf = make_demo_pdf(file_name)
+        with open(os.path.join(folder, stored_name), "wb") as f:
+            f.write(pdf)
+        cursor.execute(
+            """INSERT INTO documents (patient_no, file_name, stored_path, mime_type, size_bytes,
+                                      doc_type, note, uploaded_by, created_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            (patient_no, file_name, f"{patient_no}/{stored_name}", "application/pdf", len(pdf),
+             doc_type, note, admin_id, now - timedelta(days=days_ago)))
 
 
 def main():
